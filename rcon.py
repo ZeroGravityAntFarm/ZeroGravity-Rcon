@@ -12,19 +12,19 @@ password = '' #ed management password
 server = '' #ed server address
 port = '11776'
 apiToken = ''
-botName = '' #Webhook name MUST match bot name !!! IF YOU ARE HAVING ISSUES TRIPLE CHECK THIS !!!
-discordChan = ''
+botName = '' #Webhook name MUST match bot name
+discordChan = 'rcon'
 serverAdmin = '<@&>' #if anyone mentions hack or admin keyword notify the server admin in discord
-webHook = 'https://discordapp.com/api/webhooks/xxx/yyy'
+webHook = 'https://discordapp.com/api/webhooks/'
 motd_msg = 'Join us on discord! https://discord.gg/'
-dew_api = 'http://:11775'
+crash_command = '!server.unlimitedsprint 1'
+dew_api = 'http://yourserveriphere:11775'
 ##########################  Config  ###################################
 
 keywords = ['admin', 'hack', 'hacker', 'server', 'Admin']
 
 #build our dewrito rcon connection
 def connectSock():
-
     while True:
         try:
             global ws
@@ -95,27 +95,32 @@ def server_meta():
 
 def help_menu():
 
-    payload = """ ```               !game.gametype "<variant name>" #Force load a game variant
-               !game.map "<map name>" #Force load a Map
-               !game.start #Start a match with a force loaded map and variant
-               !game.stop #Stop any in progress match and return to lobby
-               !Server.ReloadVotingJson #Reload voting.json
-               !Server.KickBanIndex
-               !Server.KickBanPlayer
-               !Server.KickBanUid
-               !Server.KickIndex
-               !Server.KickPlayer
-               !Server.KickTempBanPlayer
-               !Server.KickTempBanUid
-               !Server.KickUid
-               !Server.unban ip <ip>
-               !Server.ListPlayers
-               !Server.CancelVote
-               !Server.say
-               !Server.sprintenabled #Valid arguments are 1 or 0
-               !Server.UnlimitedSprint #Valid arguments are 1 or 0
-               !playerstats #Active scoreboard
-               !serverstats #Active map and variant``` """
+    payload = """ ```-------------[Game Management]-------------
+!game.gametype "<variant name>" #Force load a game variant
+!game.map "<map name>" #Force load a Map
+!game.start #Start a match with a force loaded map and variant
+!game.stop #Stop any in progress match and return to lobby
+!Server.ReloadVotingJson #Reload voting.json
+!Server.CancelVote
+
+-------------[Player Management]-------------
+!Server.KickBanIndex
+!Server.KickBanPlayer
+!Server.KickBanUid
+!Server.KickIndex
+!Server.KickPlayer
+!Server.KickTempBanPlayer
+!Server.KickTempBanUid
+!Server.KickUid
+!Server.unban ip <ip>
+!Server.ListPlayers
+
+-------------[Miscellaneous]-------------
+!Server.say
+!Server.sprintenabled #Valid arguments are 1 or 0
+!Server.UnlimitedSprint #Valid arguments are 1 or 0
+!playerstats #Active scoreboard
+!serverstats #Active map and variant``` """
 
     try:
         webhook = DiscordWebhook(url=webHook, content=payload)
@@ -155,6 +160,7 @@ def motd():
         time.sleep(1800)
         try:
             ws.send("server.say " + motd_msg)
+            ws.send(crash_command)
 
         except:
             print('Failed to send motd, retrying...')
