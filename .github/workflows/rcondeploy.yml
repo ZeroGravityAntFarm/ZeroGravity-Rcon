@@ -1,0 +1,36 @@
+name: scp maps
+on: 
+  push:
+    branches:
+      - master
+jobs:
+  DeployMaps:
+    name: Map Deploy
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: copy file via ssh password
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.LOWORBITHOST }}
+        username: ${{ secrets.USERNAME }}
+        password: ${{ secrets.PASSWORD }}
+        port: 22
+        source: "maps"
+        target: "/home/${{ secrets.USERNAME }}/containers/rcon/"
+        overwrite: 1
+        
+        
+  CopyLocal:
+    name: Copy Local Files
+    needs: [DeployMaps, DeployVoteConfig]
+    runs-on: ubuntu-latest
+    steps:
+    - name: executing remote ssh commands using password
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.LOWORBITHOST }}
+        username: ${{ secrets.USERNAME }}
+        password: ${{ secrets.PASSWORD }}
+        port: 22
+        script: echo ${{ secrets.PASSWORD }} | sudo -S /home/${{ secrets.USERNAME }}/containers/rcon/build.sh
