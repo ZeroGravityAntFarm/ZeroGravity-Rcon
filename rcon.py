@@ -9,7 +9,7 @@ from dewcon import Dewparser
 from discord_webhook import DiscordWebhook
 
 
-#Instantiate our logger instance 
+#Instantiate our logger instance
 logging.basicConfig(level = logging.INFO)
 log = logging.getLogger("dewcon-logs")
 
@@ -64,11 +64,11 @@ def rconfeed():
 
         result = result.strip('<SERVER/0000000000000000/127.0.0.1>')
 
-        #Make sure message wasnt sent from discord preventing endless loop 
+        #Make sure message wasnt sent from discord preventing endless loop
         if '<discord>' in result:
             continue
-        
-        #Try to catch a broken web socket 
+
+        #Try to catch a broken web socket
         elif 'No session available' in result:
             continue
 
@@ -83,8 +83,10 @@ def rconfeed():
             chat = Dewparser(result)
             try:
                 chat.parse()
+                info.log(chat.name)
             except:
                 discordhook(result)
+                continue
 
             #Check for bad words, names, and uids in chat. If found, ban the player, update the config, then send a notification.
             for x in dewconfig["ed_banned_words"]:
@@ -102,13 +104,15 @@ def rconfeed():
                     dewconfig["ed_banned_uid"].append(chat.uid)
                     configupdate()
                     discordhook(banmsg)
-            
+
             for x in dewconfig["ed_banned_uid"]:
                 if x in chat.uid:
                     ws.send("server.kickbanuid " + chat.uid)
                     banmsg = "**Banned " + chat.name + "**"
                     discordhook(banmsg)
 
+            discordhook(result)
+            continue
 
 #####################################################
 #                 Command Helpers                   #
@@ -274,7 +278,7 @@ async def on_message(message):
 
         #Getto arg parsing for disc commands.
         arg = str(message.content).split(" ")
-        
+
         if message.content[1:] == "match":
             matchdata()
             return
@@ -290,11 +294,11 @@ async def on_message(message):
         elif "!banname" in message.content:
             ban(arg[1], "name")
             return
-        
+
         elif "!banword" in message.content:
             ban(arg[1], "word")
             return
-        
+
         elif message.content[1:] == "banlist":
             banlist()
             return
@@ -304,7 +308,7 @@ async def on_message(message):
 
         elif "!forgivename" in message.content:
             forgive(arg[1], "name")
-        
+
         elif "!forgiveword" in message.content:
             forgive(arg[1], "word")
 
@@ -319,7 +323,7 @@ async def on_message(message):
             except:
                 log.warning("Failed to connect to rcon, retrying...")
                 connectSock()
-    
+
     #If no commands are detected then send to the game chat
     else:
         try:
