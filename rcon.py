@@ -83,7 +83,6 @@ def rconfeed():
             chat = Dewparser(result)
             try:
                 chat.parse()
-                info.log(chat.name)
             except:
                 discordhook(result)
                 continue
