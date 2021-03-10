@@ -30,9 +30,9 @@ def configupdate():
 
 #Method to handle connection to the eldewrito rcon port
 def connectSock():
-    global ws
     while True:
         try:
+            global ws
             ws = create_connection("ws://" + dewconfig["ed_server_ip"] + ":" + dewconfig["ed_server_rcon_port"], subprotocols=["dew-rcon"])
             ws.send(dewconfig["ed_rcon_password"])
 
@@ -78,37 +78,36 @@ def rconfeed():
         elif result == None:
             continue
 
-        #The parser isnt very smart so we must have valid ed messages coming through or it will break.
-        chat = Dewparser(result)
-        try:
-            chat.parse()
-        except:
-            continue
+        else:
+            #The parser isnt very smart so we must have valid ed messages coming through or it will break.
+            chat = Dewparser(result)
+            try:
+                chat.parse()
+            except:
+                discordhook(result)
 
-        #Check for bad words, names, and uids in chat. If found, ban the player, update the config, then send a notification.
-        for x in dewconfig["ed_banned_words"]:
-            if x in chat.message:
-                ws.send("server.kickbanuid " + chat.uid)
-                banmsg = "**Banned " + chat.name + " for saying " + x + "**"
-                dewconfig["ed_banned_uid"].append(chat.uid)
-                configupdate()
-                discordhook(banmsg)
+            #Check for bad words, names, and uids in chat. If found, ban the player, update the config, then send a notification.
+            for x in dewconfig["ed_banned_words"]:
+                if x in chat.message:
+                    ws.send("server.kickbanuid " + chat.uid)
+                    banmsg = "**Banned " + chat.name + " for saying " + x + "**"
+                    dewconfig["ed_banned_uid"].append(chat.uid)
+                    configupdate()
+                    discordhook(banmsg)
 
-        for x in dewconfig["ed_banned_names"]:
-            if x in chat.name:
-                ws.send("server.kickbanuid " + chat.uid)
-                banmsg = "**Banned " + chat.name + " for having illegal name**"
-                dewconfig["ed_banned_uid"].append(chat.uid)
-                configupdate()
-                discordhook(banmsg)
-        
-        for x in dewconfig["ed_banned_uid"]:
-            if x in chat.uid:
-                ws.send("server.kickbanuid " + chat.uid)
-                banmsg = "**Banned " + chat.name + "**"
-                discordhook(banmsg)
-
-        discordhook(result)
+            for x in dewconfig["ed_banned_names"]:
+                if x in chat.name:
+                    ws.send("server.kickbanuid " + chat.uid)
+                    banmsg = "**Banned " + chat.name + " for having illegal name**"
+                    dewconfig["ed_banned_uid"].append(chat.uid)
+                    configupdate()
+                    discordhook(banmsg)
+            
+            for x in dewconfig["ed_banned_uid"]:
+                if x in chat.uid:
+                    ws.send("server.kickbanuid " + chat.uid)
+                    banmsg = "**Banned " + chat.name + "**"
+                    discordhook(banmsg)
 
 
 #####################################################
@@ -315,6 +314,7 @@ async def on_message(message):
         else:
             try:
                 ws.send(message.content[1:])
+                log.info(message.content[1:])
 
             except:
                 log.warning("Failed to connect to rcon, retrying...")
