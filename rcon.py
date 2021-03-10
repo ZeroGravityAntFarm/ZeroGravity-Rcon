@@ -95,6 +95,7 @@ def rconfeed():
                     dewconfig["ed_banned_uid"].append(chat.uid)
                     configupdate()
                     discordhook(banmsg)
+                    continue
 
             for x in dewconfig["ed_banned_names"]:
                 if x in chat.name:
@@ -103,12 +104,14 @@ def rconfeed():
                     dewconfig["ed_banned_uid"].append(chat.uid)
                     configupdate()
                     discordhook(banmsg)
+                    continue
 
             for x in dewconfig["ed_banned_uid"]:
                 if x in chat.uid:
                     ws.send("server.kickbanuid " + chat.uid)
                     banmsg = "**Banned " + chat.name + "**"
                     discordhook(banmsg)
+                    continue
 
             discordhook(result)
             continue
