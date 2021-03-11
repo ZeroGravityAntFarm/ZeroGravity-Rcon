@@ -5,7 +5,7 @@ class Dewparser(object):
         self.message = message
 
     def parse(self):
-
+        #[0/0/0 00:00:00] <name/uid/ip> chat message
         self.srv_msg = self.message.split(" ")
         self.player_data = re.split('[ /<>]', self.srv_msg[2])
 

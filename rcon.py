@@ -58,6 +58,7 @@ def rconfeed():
     while True:
         try:
             result = ws.recv()
+            
         except:
             connectSock()
             continue
@@ -79,10 +80,11 @@ def rconfeed():
             continue
 
         else:
-            #The parser isnt very smart so we must have valid ed messages coming through or it will break.
+            #The parser isnt very smart and will break on invalid chat messages(server command output). We can leverage this to check for command responses. 
             chat = Dewparser(result)
             try:
                 chat.parse()
+
             except:
                 discordhook(result)
                 continue
@@ -252,7 +254,6 @@ def matchdata():
 x = threading.Thread(target=rconfeed)
 x.start()
 
-
 #####################################################
 #               Discord Async Client                #
 #####################################################
@@ -307,15 +308,19 @@ async def on_message(message):
 
         elif "!forgiveuid" in message.content:
             forgive(arg[1], "uid")
+            return
 
         elif "!forgivename" in message.content:
             forgive(arg[1], "name")
+            return
 
         elif "!forgiveword" in message.content:
             forgive(arg[1], "word")
+            return
 
         elif message.content[1:] == "help":
             help_menu()
+            return
 
         else:
             try:
