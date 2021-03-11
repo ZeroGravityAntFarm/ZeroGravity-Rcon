@@ -1,6 +1,6 @@
 #!/bin/bash
 
-name="rcon"
+name="zgaf_rcon"
 
 if [[ $EUID -ne 0 ]]; then
    echo "This script must be run as root"
@@ -13,7 +13,7 @@ start() {
             echo "Old container found, removing..."
             docker rm $name
         fi
-        docker run -d --name $name rcon
+        docker run -d --name $name -v $PWD:/app zgaf_rcon
     fi
 }
 
