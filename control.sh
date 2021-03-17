@@ -13,7 +13,7 @@ start() {
             echo "Old container found, removing..."
             docker rm $name
         fi
-        docker run -d --name $name -v $PWD:/app zgaf_rcon
+        docker run -d --name $name -v $PWD:/app rcon
     fi
 }
 
