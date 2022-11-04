@@ -58,7 +58,7 @@ def rconfeed():
     while True:
         try:
             result = ws.recv()
-            
+
         except:
             connectSock()
             continue
@@ -80,7 +80,7 @@ def rconfeed():
             continue
 
         else:
-            #The parser isnt very smart and will break on invalid chat messages(server command output). We can leverage this to check for command responses. 
+            #The parser isnt very smart and will break on invalid chat messages(server command output). We can leverage this to check for command responses.
             chat = Dewparser(result)
             try:
                 chat.parse()
@@ -258,7 +258,9 @@ x.start()
 #               Discord Async Client                #
 #####################################################
 
-client = discord.Client()
+intents = discord.Intents.all()
+
+client = discord.Client(intents=intents)
 
 #Log a successful discord api connection
 @client.event
@@ -268,17 +270,22 @@ async def on_ready():
 #Async event to detect discord messages
 @client.event
 async def on_message(message):
+
     #Several checks to prevent endless loops
     if message.author == client.user:
         return
+
     elif message.author.name == dewconfig["discord_webhook_name"]:
         return
+
     elif message.channel.name != dewconfig["discord_webhook_channel"]:
+        log.info(message.channel.name)
         return
 
     #Check to see if a incoming message is a server command. We check for custom commands first, then assume the commmand was meant for the eldewrito server.
     elif '!' in message.content[0]:
 
+        log.info('command detected')
         #Getto arg parsing for disc commands.
         arg = str(message.content).split(" ")
 
@@ -319,6 +326,7 @@ async def on_message(message):
             return
 
         elif message.content[1:] == "help":
+            log.info(message.content[1:])
             help_menu()
             return
 
