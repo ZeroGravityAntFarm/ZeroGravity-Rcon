@@ -64,7 +64,7 @@ def discordBanEmbed(chat, word):
     webhook = DiscordWebhook(url=dewconfig["discord_webhook_url"])
 
     #Build out embed
-    embed = DiscordEmbed(title="Kick Ban", description="Offense: " + word, color="f54242")
+    embed = DiscordEmbed(title="Kick", description="Offense: " + word, color="f54242")
     embed.add_embed_field(name="Player", value=chat.name, inline=True)
     embed.add_embed_field(name="IP", value=chat.ip, inline=True)
     embed.add_embed_field(name="UID", value=chat.uid, inline=True)
@@ -131,26 +131,26 @@ def feedParser(rconMessage):
         #Check for bad words, names, and uids in chat. If found, ban the player, update the config, then send a notification.
         for word in dewconfig["ed_banned_words"]:
             if word in chat.message:
-                ws.send("server.kickbanuid " + chat.uid)
-                log.info("**Banned " + chat.name + " for saying " + word + "**")
-                dewconfig["ed_banned_uid"].append(chat.uid)
-                configupdate(dewconfig)
+                ws.send("server.kickuid " + chat.uid)
+                log.info("**Kicked " + chat.name + " for saying " + word + "**")
+                #dewconfig["ed_banned_uid"].append(chat.uid)
+                #configupdate(dewconfig)
                 discordBanEmbed(chat, word)
                 return
 
         for name in dewconfig["ed_banned_names"]:
             if name in chat.name:
-                ws.send("server.kickbanuid " + chat.uid)
-                log.info("**Banned " + chat.name + " for having bad name " + name + "**")
-                dewconfig["ed_banned_uid"].append(chat.uid)
-                configupdate(dewconfig)
+                ws.send("server.kickuid " + chat.uid)
+                log.info("**Kicked " + chat.name + " for having bad name " + name + "**")
+                #dewconfig["ed_banned_uid"].append(chat.uid)
+                #configupdate(dewconfig)
                 discordBanEmbed(chat, name)
                 return
 
         for uid in dewconfig["ed_banned_uid"]:
             if uid in chat.uid:
-                ws.send("server.kickbanuid " + chat.uid)
-                log.info("**Banned " + chat.name + "**")
+                ws.send("server.kickuid " + chat.uid)
+                log.info("**Kicked " + chat.name + "**")
                 discordBanEmbed(chat, uid)
                 return
 
@@ -271,6 +271,8 @@ def help_menu():
 
 #Grab scoreboard data from the eldewrito server api then return to discord
 def scoreboard():
+    dewconfig = getConfig()
+    
     players = ["```"]
     try:
         with urllib.request.urlopen(dewconfig["ed_server_api"]) as url:
@@ -289,6 +291,8 @@ def scoreboard():
 
 #Grab match data from the eldewrito server api then return to discord
 def matchdata():
+    dewconfig = getConfig()
+
     try:
         with urllib.request.urlopen(dewconfig["ed_server_api"]) as url:
             data = json.loads(url.read().decode())
