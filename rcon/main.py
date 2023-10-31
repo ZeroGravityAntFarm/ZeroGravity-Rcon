@@ -229,6 +229,7 @@ def help_menu():
 
     webhook = DiscordWebhook(url=dewconfig["discord_webhook_url"])
     embed = DiscordEmbed(title="Help Menu", description="Auto Moderation", color="10dce3")
+    embed.add_embed_field(name="!banlist", value="List all banned uids, names, and words", inline=False)
     embed.add_embed_field(name="!banuid", value="Add UID to ban config", inline=False)
     embed.add_embed_field(name="!banname", value="Add player name to ban config", inline=False)
     embed.add_embed_field(name="!banword", value="Add a chat word to ban config", inline=False)
