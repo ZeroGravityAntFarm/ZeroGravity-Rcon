@@ -1,9 +1,7 @@
-FROM python:3
+FROM python:3.11
 
-RUN mkdir app
+WORKDIR /rcon
 
-WORKDIR /app
+RUN pip3 install discord discord-webhook websocket-client rel
 
-RUN pip3 install discord discord-webhook websocket-client
-
-CMD [ "python3",  "rcon/rcon.py" ]
+CMD [ "python3",  "main.py" ]

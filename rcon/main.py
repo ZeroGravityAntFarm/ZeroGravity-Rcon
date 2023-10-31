@@ -35,6 +35,7 @@ def configupdate(dewconfig):
             json.dump(dewconfig, outfile)
             outfile.close()
             log.info("Updated config.")
+            log.info(outfile)
 
     except:
         log.error("Failed to update config!")
@@ -50,8 +51,6 @@ def discordhook(hookmsg):
 
             #Webhook has a response value that should be handled. !TODO!
             response = webhook.execute()
-            log.info("Webhook sent: ")
-            log.info(hookmsg)
 
         except:
             log.warning("Failed to send message to discord webhook!")
@@ -59,34 +58,40 @@ def discordhook(hookmsg):
 
 
 #Method to handle discord webhook communication
-def discordHookEmbed(chatmsg, msg_type):
+def discordBanEmbed(chat, word):
     dewconfig = getConfig()
-
-    msg = Dewparser(chatmsg)
-    msg.parse()
-
-    if msg_type == "ban":
-        color = "f54242"
-
-    if msg_type == "msg":
-        color = "0f0f0f"
-
-    if msg_type == "log":
-        color = "faf43e"
-
 
     webhook = DiscordWebhook(url=dewconfig["discord_webhook_url"])
 
     #Build out embed
-    embed = DiscordEmbed(title=msg.name, description=msg.message, color=color)
-
-    embed.add_embed_field(name="IP", value=msg.ip, inline=True)
-    embed.add_embed_field(name="UID", value=msg.uid, inline=True)
-    embed.set_footer(text=msg.date + " " + msg.time)
+    embed = DiscordEmbed(title="Kick Ban", description="Offense: " + word, color="f54242")
+    embed.add_embed_field(name="Player", value=chat.name, inline=True)
+    embed.add_embed_field(name="IP", value=chat.ip, inline=True)
+    embed.add_embed_field(name="UID", value=chat.uid, inline=True)
+    embed.set_footer(text=chat.date + " " + chat.time)
 
     webhook.add_embed(embed)
 
-    try:    #Webhook has a response value that should be handled. !TODO!
+    try:
+        response = webhook.execute()
+        log.info(response)
+
+    except Exception as e:
+        log.warning("Failed to send message to discord webhook! " + e)
+
+
+#Method to handle discord webhook communication
+def discordLogEmbed(title, description):
+    dewconfig = getConfig()
+
+    webhook = DiscordWebhook(url=dewconfig["discord_webhook_url"])
+
+    #Build out embed
+    embed = DiscordEmbed(title=title, description=description, color="17fc03")
+
+    webhook.add_embed(embed)
+
+    try:
         response = webhook.execute()
         log.info(response)
 
@@ -97,6 +102,8 @@ def discordHookEmbed(chatmsg, msg_type):
 
 #Check inbound rcon message for bad words, banned players, etc, then send to discord
 def feedParser(rconMessage):
+    dewconfig = getConfig()
+    
     rconMessage = rconMessage.strip('<SERVER/0000000000000000/127.0.0.1>')
     if '<discord>' in rconMessage:
         return
@@ -118,41 +125,43 @@ def feedParser(rconMessage):
             chat.parse()
 
         except:
-            discordhook(rconMessage)
+            discordLogEmbed("Server", rconMessage)
             return
 
         #Check for bad words, names, and uids in chat. If found, ban the player, update the config, then send a notification.
-        for x in dewconfig["ed_banned_words"]:
-            if x in chat.message:
+        for word in dewconfig["ed_banned_words"]:
+            if word in chat.message:
                 ws.send("server.kickbanuid " + chat.uid)
-                banmsg = "**Banned " + chat.name + " for saying " + x + "**"
+                log.info("**Banned " + chat.name + " for saying " + word + "**")
                 dewconfig["ed_banned_uid"].append(chat.uid)
-                configupdate()
-                discordhook(banmsg)
-                continue
+                configupdate(dewconfig)
+                discordBanEmbed(chat, word)
+                return
 
-        for x in dewconfig["ed_banned_names"]:
-            if x in chat.name:
+        for name in dewconfig["ed_banned_names"]:
+            if name in chat.name:
                 ws.send("server.kickbanuid " + chat.uid)
-                banmsg = "**Banned " + chat.name + " for having illegal name**"
+                log.info("**Banned " + chat.name + " for having bad name " + name + "**")
                 dewconfig["ed_banned_uid"].append(chat.uid)
-                configupdate()
-                discordhook(banmsg)
-                continue
+                configupdate(dewconfig)
+                discordBanEmbed(chat, name)
+                return
 
-        for x in dewconfig["ed_banned_uid"]:
-            if x in chat.uid:
+        for uid in dewconfig["ed_banned_uid"]:
+            if uid in chat.uid:
                 ws.send("server.kickbanuid " + chat.uid)
-                banmsg = "**Banned " + chat.name + "**"
-                discordhook(banmsg)
-                continue
+                log.info("**Banned " + chat.name + "**")
+                discordBanEmbed(chat, uid)
+                return
 
-        discordHookEmbed(rconMessage, "msg")
+        discordhook(rconMessage)
         return
 
 
 #Append to the banlist then update the config
 def ban(banid, idtype):
+    dewconfig = getConfig()
+
     try:
         if idtype == "name":
             dewconfig["ed_banned_names"].append(banid)
@@ -166,14 +175,16 @@ def ban(banid, idtype):
             dewconfig["ed_banned_words"].append(banid)
             configupdate(dewconfig)
 
-        discordhook("Added " + banid + " to banlist.")
+        discordLogEmbed("Ban " + idtype, "Added " + banid + " to banlist.")
 
     except:
-        discordhook("Failed to add " + banid + " to banlist.")
+        discordLogEmbed("Error", "Failed to add " + banid + " to banlist.")
 
 
 #Forgive a ban then update the config
 def forgive(banid, idtype):
+    dewconfig = getConfig()
+
     try:
         if idtype == "name":
             dewconfig["ed_banned_names"].remove(banid)
@@ -187,20 +198,22 @@ def forgive(banid, idtype):
             dewconfig["ed_banned_words"].remove(banid)
             configupdate(dewconfig)
 
-        discordhook("Removed " + banid + " from banlist.")
+        discordLogEmbed("Forgive " + idtype, "Removed " + banid + " from banlist.")
 
     except:
-        discordhook(banid + " not found in banlist.")
+        discordLogEmbed("Not Found", banid + " was not found.")
 
 
 #Send a list of banned items
 def banlist():
+    dewconfig = getConfig()
     payload = "Names: " + str(dewconfig["ed_banned_names"]) + "\n" + "UIDs: " + str(dewconfig["ed_banned_uid"]) + "\n" + "Words: " + str(dewconfig["ed_banned_words"])
-    discordhook(payload)
+    discordLogEmbed("Ban List", payload)
 
 
 #Sends a list of commands to discord
 def help_menu():
+    dewconfig = getConfig()
 
     webhook = DiscordWebhook(url=dewconfig["discord_webhook_url"])
     embed = DiscordEmbed(title="Help Menu", description="Game Management", color="10dce3")
@@ -267,7 +280,7 @@ def scoreboard():
 
         players.append("```")
         players = "\n".join(players)
-        discordhook(players)
+        discordLogEmbed("Scoreboard", players)
 
     except:
         log.error("Could not connect to the dewrito meta data api.")
@@ -280,7 +293,7 @@ def matchdata():
             data = json.loads(url.read().decode())
 
         payload = "Players: {}, Status: {},  Map: {}, GameType: {}".format(data["numPlayers"], data["status"], data["map"], data["variant"])
-        discordhook(payload)
+        discordLogEmbed("Match Data", payload)
 
     except:
         log.warning("Could not connect to the dewrito meta data api.")
@@ -288,6 +301,8 @@ def matchdata():
 
 #Gets around client.run being a blocking operation
 def discord_init():
+    dewconfig = getConfig()
+
     intents = discord.Intents.all()
     client = discord.Client(intents=intents)
 
@@ -295,7 +310,7 @@ def discord_init():
     #Log a successful discord api connection
     @client.event
     async def on_ready():
-        discordhook('Connected to discord as {0.user}'.format(client))
+        discordLogEmbed("Connected to Discord!", 'Connected to discord as {0.user}'.format(client))
 
 
     #Handle outbound rcon commands and messages
@@ -371,11 +386,13 @@ def discord_init():
             ws.send('server.say {0.author}: {0.content}'.format(message))
 
     client.run(dewconfig["discord_api_token"])
-    discordhook("Discord client thread started")
+    discordLogEmbed("Connected to Discord", "Successfully connected to Discord API")
 
 
 #Initialize websocket connection, and retry on failure
 def wsInit():
+    dewconfig = getConfig()
+
     while True:
         try:
             global ws
@@ -389,7 +406,7 @@ def wsInit():
             continue
 
         log.info("Succesfully connected to rcon!")
-        discordhook("Connected to Eldewrito!")
+        discordLogEmbed("Connect to Eldewrito", "Connection to Eldewrito RCON successful!")
 
         break
 
@@ -401,7 +418,6 @@ def rconMain():
             message = ws.recv()
 
         except:
-            log.warning("Rcon connection failed, retrying...")
             wsInit()
 
             continue
@@ -415,8 +431,6 @@ def rconMain():
 
 #Entry Point
 if __name__ == "__main__":
-    dewconfig = getConfig()
-
     #Initialize websocket client
     wsInit()
 
@@ -424,5 +438,5 @@ if __name__ == "__main__":
     wsRcon = threading.Thread(target=rconMain)
     wsRcon.start()
 
-    #Call discord client.run in asyncio wrapper
+    #Call discord client.run last as it is blocking
     discord_init()

@@ -2,7 +2,7 @@
 The official zero gravity rcon tool.
 
 ## Usage:
-Fill out the config file in the rcon folder then run ./build.sh. The bad words, name, and uid section CANNOT be blank. If left blank the rcon tool will auto ban anyone who tries to join the server. 
+Fill out the config file in the rcon folder then run ./build.sh
 
 #### Commands
 ```

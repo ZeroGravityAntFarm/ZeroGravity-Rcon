@@ -13,7 +13,7 @@ start() {
             echo "Old container found, removing..."
             docker rm $name
         fi
-        docker run -d --name $name -v $PWD:/app rcon
+        docker run -d --name $name -v $PWD/rcon:/rcon $name
     fi
 }
 
@@ -28,6 +28,17 @@ status() {
 reload() {
     docker kill -s HUP $name
 }
+
+build() {
+    docker build -t $name .
+    stop
+    start
+}
+
+logs() {
+    docker logs $name
+}
+
 case "$1" in
     start)
        start
@@ -41,8 +52,14 @@ case "$1" in
     status)
        status
        ;;
+    build)
+       build
+       ;;
+    logs)
+       logs
+       ;;
     *)
-       echo "Usage: $0 {start|stop|status|reload}"
+       echo "Usage: $0 {start|stop|status|reload|build}"
 esac
 
 exit 0
