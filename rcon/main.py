@@ -130,25 +130,22 @@ def feedParser(rconMessage):
 
         #Check for bad words, names, and uids in chat. If found, ban the player, update the config, then send a notification.
         for word in dewconfig["ed_banned_words"]:
-            if word in chat.message:
-                ws.send("server.kickuid " + chat.uid)
-                log.info("**Kicked " + chat.name + " for saying " + word + "**")
-                #dewconfig["ed_banned_uid"].append(chat.uid)
-                #configupdate(dewconfig)
-                discordBanEmbed(chat, word)
-                return
+            for chat_word in chat.message.split():
+                if word == chat_word:
+                    ws.send("server.kickuid " + chat.uid)
+                    log.info("**Kicked " + chat.name + " for saying " + word + "**")
+                    discordBanEmbed(chat, word)
+                    return
 
         for name in dewconfig["ed_banned_names"]:
-            if name in chat.name:
+            if name == chat.name:
                 ws.send("server.kickuid " + chat.uid)
                 log.info("**Kicked " + chat.name + " for having bad name " + name + "**")
-                #dewconfig["ed_banned_uid"].append(chat.uid)
-                #configupdate(dewconfig)
                 discordBanEmbed(chat, name)
                 return
 
         for uid in dewconfig["ed_banned_uid"]:
-            if uid in chat.uid:
+            if uid == chat.uid:
                 ws.send("server.kickuid " + chat.uid)
                 log.info("**Kicked " + chat.name + "**")
                 discordBanEmbed(chat, uid)
